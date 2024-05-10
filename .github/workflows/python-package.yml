@@ -42,15 +42,39 @@ jobs:
       
     - name: run file
       run: |
+        python3 dessert39Coffee.py
+        python3 gurunaruCoffee.py
+        python3 hollysCoffee.py
+        python3 mammothCoffee.py
+        python3 paiksCoffee.py
+        python3 tomntomCoffee.py
         python3 caffebeneCoffee.py
         python3 canbusCoffee.py
+        python3 theventiCoffee.py
+        python3 ediyaCoffee.py
+        python3 coffeebayCoffee.py
+        python3 composeCoffee.py
+        python3 coffeebanhadaCoffee.py
+        python3 starbucksCoffee.py
         
     - name: commits
       run : |
         git config --global user.email "liarusen@gmail.com"
         git config --global user.name "sunhew"
+        git add dessert39/menudessert39_*.json
+        git add gurunaru/menugurunaru_*.json
+        git add hollys/menuhollys_*.json
+        git add mammoth/menumammoth_*.json
+        git add paiks/menupaiks_*.json
+        git add tomntom/menutomntom_*.json
         git add caffebene/menucaffebene_*.json
         git add canbus/menucanbus_*.json
+        git add theventi/menutheventi_*.json
+        git add ediya/menuediya_*.json
+        git add coffeebay/menucoffeebay_*.json
+        git add compose/menucompose_*.json
+        git add coffeebanhada/menucoffeebanhada_*.json
+        git add starbucks/menustarbucks_*.json
         git commit -m "메뉴 수집 완료"
         
     - name: push
