@@ -56,8 +56,8 @@ for track in tracks:
     image_url = track.select_one("a > img").get('src').replace('/images', 'https://www.ediya.com/files')
 
     EDIYA_data.append({
-        "name": name,
-        "image_url": image_url
+        "title": name,
+        "imageURL": image_url
     })
 
 # 데이터를 JSON 파일로 저장
