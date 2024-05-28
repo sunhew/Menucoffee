@@ -9,16 +9,22 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 import time
 import json
+import os
+import re
 
 # 현재 날짜 가져오기
 current_date = datetime.now().strftime("%Y-%m-%d")
 folder_path = "coffeebay"
 filename = f"{folder_path}/menucoffeebay_{current_date}.json"
 
+# 폴더 생성
+if not os.path.exists(folder_path):
+    os.makedirs(folder_path)
+
 # 웹드라이브 설치
 options = ChromeOptions()
 options.add_argument("--headless")
-browser = webdriver.Chrome(options=options)
+browser = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
 browser.get("https://www.coffeebay.com/product/prd_menu.php?code=001&idx2=001")
 
 # 페이지가 완전히 로드될 때까지 대기
@@ -32,11 +38,12 @@ soup = BeautifulSoup(html_source_updated, 'html.parser')
 
 # 데이터 추출
 coffee_data = []
-tracks = soup.select("#sub_con > div> div > .list_con > div > .list_con > ul > li")
+tracks = soup.select("#sub_con > div > div > .list_con > div > .list_con > ul > li")
 
 for track in tracks:
-    title = track.select_one("li > .list_div > .title_con > .kor_con > span").text.strip()    
-    image_url = track.select_one("li >.list_div >.img_con > img").get('src').replace('/img', 'https://www.coffeebay.com/img')
+    title = track.select_one(".list_div .title_con .kor_con span").text.strip()
+    image_style = track.select_one(".list_div .img_con").get('style')
+    image_url = re.search(r'url\((.*?)\)', image_style).group(1).replace("/upload", "https://www.coffeebay.com/upload")
     coffee_data.append({
         "title": title,
         "imageURL": image_url,
@@ -46,5 +53,5 @@ for track in tracks:
 with open(filename, 'w', encoding='utf-8') as f:
     json.dump(coffee_data, f, ensure_ascii=False, indent=4)
 
-# # 브라우저 종료
-# browser.quit()
+# 브라우저 종료
+browser.quit()
