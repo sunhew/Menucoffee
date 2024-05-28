@@ -51,7 +51,7 @@ for url in urls:
 
         theventi_data.append({
             "title": name,
-            "img": image_url 
+            "imageURL": image_url 
         })
 
 # 데이터를 JSON 파일로 저장
