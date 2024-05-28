@@ -49,15 +49,22 @@ soup = BeautifulSoup(html_source_updated, 'html.parser')
 
 # 데이터 추출
 coffeebanhada_data = []
-tracks = soup.select("#wrap > div.sub_content.menu_wrap > .menu_lst.m_menu_lst")
-for track in tracks:
-    name = track.select_one("#wrap > div.sub_content.menu_wrap > div > div > p").text.strip()
-    image_url = track.select_one("#wrap > div.sub_content.menu_wrap > div > div > div > img").get('src').replace('/data', 'https://coffeebanhada.com/data')
+items = soup.select("div.menu_introduce_wrap ul.menu_introduce li a")
 
-    coffeebanhada_data.append({
-        "p": name,
-        "img": image_url                                
-    })
+print(f"Found {len(items)} items.")  # 디버깅용 출력
+
+# 각 항목에서 데이터 추출
+for item in items:
+    try:
+        name = item.select_one("p.title").text.strip()
+        image_url = item.select_one("img").get('src').replace('/data', 'https://coffeebanhada.com/data')
+        
+        coffeebanhada_data.append({
+            "title": name,
+            "imageURL": image_url
+        })
+    except Exception as e:
+        print(f"Error extracting data from item: {e}")
 
 # 데이터를 JSON 파일로 저장
 with open(filename, 'w', encoding='utf-8') as f:
@@ -65,3 +72,5 @@ with open(filename, 'w', encoding='utf-8') as f:
 
 # 브라우저 종료
 browser.quit()
+
+print(f"Data successfully saved to {filename}")
