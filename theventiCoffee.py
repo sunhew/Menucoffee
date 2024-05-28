@@ -48,8 +48,8 @@ for url in urls:
         image_url = track.select_one("#contents > div > div > div.menu_list > ul > li > a > div.img_bx > img").get('src').replace('/uploads', 'http://www.theventi.co.kr/uploads')  # 올바른 선택자로 수정
 
         theventi_data.append({
-            "p.tit": name,  # 키 이름을 의미있게 수정
-            "img": image_url  # 키 이름을 의미있게 수정
+            "title": name,  # 키 이름을 의미있게 수정
+            "imageURL": image_url  # 키 이름을 의미있게 수정
         })
 
 # 데이터를 JSON 파일로 저장
