@@ -42,11 +42,20 @@ tracks = soup.select("#sub_con > div > div > .list_con > div > .list_con > ul > 
 
 for track in tracks:
     title = track.select_one(".list_div .title_con .kor_con span").text.strip()
+    en_title = track.select_one(".list_div .title_con .eng_con span").text.strip()
     image_style = track.select_one(".list_div .img_con").get('style')
     image_url = re.search(r'url\((.*?)\)', image_style).group(1).replace("/upload", "https://www.coffeebay.com/upload")
+    sub__title = track.select_one(".over_con > .contents_con.w_niceScroll_con > .contents_con.m_niceScroll_con > .info01_con > .intro_con span").text.strip()
+    contents = track.select_one(".over_con > .contents_con.w_niceScroll_con > .contents_con.m_niceScroll_con > .info02_con > .title_con span").text.strip()
+    content = track.select_one(".over_con > .contents_con.w_niceScroll_con > .contents_con.m_niceScroll_con > .info02_con > .info_con span").text.strip()
+    
     coffee_data.append({
         "title": title,
+        "entitle": en_title,
         "imageURL": image_url,
+        "SubTitle": sub__title,
+        "contents": contents,
+        "content": content
     })
 
 # 데이터를 JSON 파일로 저장
