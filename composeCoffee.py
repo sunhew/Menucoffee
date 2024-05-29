@@ -27,7 +27,7 @@ urls = [
 ]
 
 # 데이터 추출을 위한 빈 리스트 생성
-theventi_data = []
+compose_data = []
 
 for url in urls:
     # 페이지 로드
@@ -44,19 +44,33 @@ for url in urls:
     soup = BeautifulSoup(html_source_updated, 'html.parser')
 
     # 데이터 추출
-    tracks = soup.select(".itemBox")
-    for track in tracks:
-        name = track.select_one(".title").text.strip()  
-        image_url = track.select_one(".rthumbnailimg").get('src').replace('/files', 'https://composecoffee.com/files') 
+    items = soup.select(".itemBox")
+    for item in items:
+        name = item.select_one(".title").text.strip()  
+        image_url = item.select_one(".rthumbnailimg").get('src').replace('/files', 'https://composecoffee.com/files')
+        
+        # 영양성분 정보 추출
+        nutrition_info = {}
+        nutrition_items = item.select(".info.g-0 .extra")
+        for nutrition_item in nutrition_items:
+            text = nutrition_item.text.strip().replace("⚬ ", "")
+            if text:
+                key_value = text.split(" : ")
+                if len(key_value) == 2:
+                    key, value = key_value
+                    nutrition_info[key] = value
 
-        theventi_data.append({
+        compose_data.append({
             "title": name,
-            "imageURL": image_url 
+            "imageURL": image_url,
+            "content": nutrition_info
         })
 
 # 데이터를 JSON 파일로 저장
 with open(filename, 'w', encoding='utf-8') as f:
-    json.dump(theventi_data, f, ensure_ascii=False, indent=4)
+    json.dump(compose_data, f, ensure_ascii=False, indent=4)
 
 # 브라우저 종료
 browser.quit()
+
+print(f"Data successfully saved to {filename}")
