@@ -73,7 +73,7 @@ for seq in seq_list:
         image_url_tag = track.select_one(".menu-detail-view-photo img")
         image_url = image_url_tag.get('src').replace('/uploads', 'http://www.caffebene.co.kr/uploads') if image_url_tag else ""
         desction_tag = track.select_one(".menu-detail-view-info .t1")
-        desction = desction_tag.text.strip().replace('\n', ' ') if desction_tag else ""
+        desction = desction_tag.text.strip().replace('\n', ' ').replace('\t', ' ') if desction_tag else ""
 
         # tbody의 tr 요소들을 가져옴
         nutrition_info = {}
