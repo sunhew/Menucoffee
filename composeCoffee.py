@@ -43,12 +43,21 @@ for url in urls:
     html_source_updated = browser.page_source
     soup = BeautifulSoup(html_source_updated, 'html.parser')
 
+    
+    page_title = soup.head.title.text.strip() if soup.head.title else "No Title"
+    page_title = page_title.replace(" - MENU", "").strip()
+
+   
+    canonical_link = soup.head.find('link', rel='canonical')
+    address = canonical_link['href'].strip() if canonical_link else "No Address"
+
     # 데이터 추출
     items = soup.select(".itemBox")
     for item in items:
-        name = item.select_one(".title").text.strip()  
+        brand = page_title
+        name = item.select_one(".title").text.strip()
         image_url = item.select_one(".rthumbnailimg").get('src').replace('/files', 'https://composecoffee.com/files')
-        
+
         # 영양성분 정보 추출
         nutrition_info = {}
         nutrition_items = item.select(".info.g-0 .extra")
@@ -61,9 +70,11 @@ for url in urls:
                     nutrition_info[key] = value
 
         compose_data.append({
+            "brand": brand,
             "title": name,
             "imageURL": image_url,
-            "content": nutrition_info
+            "information": nutrition_info,
+            "address": address
         })
 
 # 데이터를 JSON 파일로 저장
