@@ -29,16 +29,26 @@ WebDriverWait(browser, 10).until(
 html_source_updated = browser.page_source
 soup = BeautifulSoup(html_source_updated, 'html.parser')
 
+# 헤드의 타이틀을 가져옴
+page_title = soup.head.title.text.strip() if soup.head.title else "No Title"
+page_title = page_title.replace(" - 메뉴", "").strip()
+
+# 고정된 주소 설정
+address = "http://canbus.kr/doc/menu1.php"
+
 # 데이터 추출
 coffee_data = []
 tracks = soup.select("#pageWrap > ul > li")
 
 for track in tracks:
+    brand = page_title
     title = track.select_one("#pageWrap > ul > li > p").text.strip()    
     image_url = track.select_one("#pageWrap > ul > li > img").get('src').replace('/images', 'http://canbus.kr/images')
     coffee_data.append({
+        "brand": brand,
         "title": title,
         "imageURL": image_url,
+        "address": address
     })
 
 # 데이터를 JSON 파일로 저장
