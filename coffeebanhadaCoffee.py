@@ -7,7 +7,6 @@ from selenium.webdriver.chrome.options import Options as ChromeOptions
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 from datetime import datetime
-import time
 import json
 import os
 
@@ -20,55 +19,113 @@ filename = f"{folder_path}/menucoffeebanhada_{current_date}.json"
 if not os.path.exists(folder_path):
     os.makedirs(folder_path)
 
-# 웹드라이버 초기화 (Chrome 사용)
+# 웹드라이브 설치
 options = ChromeOptions()
 options.add_argument("--headless")
-browser = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--disable-gpu")
+service = ChromeService(executable_path=ChromeDriverManager().install())
+browser = webdriver.Chrome(service=service, options=options)
 
-# 로드해야 하는 페이지
-url = 'https://coffeebanhada.com/main/menu/list4.php?page_type=1'
-browser.get(url)
+# 수집할 m_idx 값 리스트
+m_idx_list = [
+    1211, 1077, 1075, 1073, 1071, 1070, 1068, 1066, 1064, 1062, 1060, 1058, 1056, 1054
+]
 
-# '더보기' 버튼이 나타날 때까지 기다림 (최대 20초)
-while True:
+# 데이터 추출을 위한 빈 리스트 생성
+coffee_data = []
+
+for m_idx in m_idx_list:
+    url = f"https://coffeebanhada.com/main/menu/view.php?m_idx={m_idx}"
+    browser.get(url)
+
+    # 페이지가 완전히 로드될 때까지 대기
     try:
-        more_button = WebDriverWait(browser, 20).until(
-            EC.visibility_of_element_located((By.CSS_SELECTOR, ".line_btn"))
+        WebDriverWait(browser, 20).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "menu_info_top"))
         )
-        if more_button:
-            more_button.click()  # '더보기' 버튼 클릭
-            print("Clicked '더보기' button.")
-            time.sleep(2)  # 페이지 로딩 대기
-    except Exception as e:
-        print("더보기 버튼을 찾을 수 없음:", e)
-        break
-
-# 업데이트된 페이지 소스를 변수에 저장
-html_source_updated = browser.page_source
-soup = BeautifulSoup(html_source_updated, 'html.parser')
-
-# 데이터 추출
-coffeebanhada_data = []
-items = soup.select("div.menu_introduce_wrap ul.menu_introduce li a")
-
-print(f"Found {len(items)} items.")  # 디버깅용 출력
-
-# 각 항목에서 데이터 추출
-for item in items:
-    try:
-        name = item.select_one("p.title").text.strip()
-        image_url = item.select_one("img").get('src').replace('/data', 'https://coffeebanhada.com/data')
-        
-        coffeebanhada_data.append({
-            "title": name,
-            "imageURL": image_url
+    except:
+        print(f"Skipping m_idx={m_idx}, element not found.")
+        coffee_data.append({
+            "brand": "커피에반하다",
+            "title": "",
+            "titleE": "",
+            "imageURL": "",
+            "desction": "",
+            "information": {},
+            "address": url
         })
-    except Exception as e:
-        print(f"Error extracting data from item: {e}")
+        continue
+
+    # 상세 페이지의 소스를 변수에 저장
+    detail_page_source = browser.page_source
+    soup = BeautifulSoup(detail_page_source, 'html.parser')
+
+    # 고정된 주소 설정
+    address = url
+
+    # 데이터 추출
+    item = soup.select_one(".sub_content .menu_info .menu_info_in.w1250")
+
+    if item:
+        try:
+            title = item.select_one(".menu_info_right p.menu_title").contents[0].strip()
+            titleE = item.select_one(".menu_info_right p.menu_title span").text.strip()
+            image_url = item.select_one(".menu_info_left img").get('src').replace('/data', 'https://coffeebanhada.com/data')
+            desction = item.select_one(".menu_info_right p.menu_sub").get_text(separator=" ").strip().replace('\n', ' ').replace('\t', ' ')
+
+            # HOT 영양 정보 추출
+            nutrition_info = {}
+            rows = item.select("div.nutritional_info_vanada tr")
+            for row in rows:
+                if "HOT" in row.get_text():
+                    cols = row.find_all("td")
+                    if cols:
+                        nutrition_info = {
+                            "열량(Kcal)": cols[1].text.strip(),
+                            "당류(g)": cols[2].text.strip(),
+                            "단백질(g)": cols[3].text.strip(),
+                            "포화지방(g)": cols[4].text.strip(),
+                            "나트륨(mg)": cols[5].text.strip(),
+                            "카페인(mg)": cols[6].text.strip(),
+                        }
+                        break
+
+            coffee_data.append({
+                "brand": "커피에반하다",
+                "title": title,
+                "titleE": titleE,
+                "imageURL": image_url,
+                "desction": desction,
+                "information": nutrition_info,
+                "address": address
+            })
+        except Exception as e:
+            print(f"Error extracting data from m_idx={m_idx}: {e}")
+            coffee_data.append({
+                "brand": "커피에반하다",
+                "title": "",
+                "titleE": "",
+                "imageURL": "",
+                "desction": "",
+                "information": {},
+                "address": address
+            })
+    else:
+        coffee_data.append({
+            "brand": "커피에반하다",
+            "title": "",
+            "titleE": "",
+            "imageURL": "",
+            "desction": "",
+            "information": {},
+            "address": address
+        })
 
 # 데이터를 JSON 파일로 저장
 with open(filename, 'w', encoding='utf-8') as f:
-    json.dump(coffeebanhada_data, f, ensure_ascii=False, indent=4)
+    json.dump(coffee_data, f, ensure_ascii=False, indent=4)
 
 # 브라우저 종료
 browser.quit()
