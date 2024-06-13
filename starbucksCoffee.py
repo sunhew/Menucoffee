@@ -1,50 +1,93 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options as ChromeOptions
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
-from datetime import datetime
-import time
 import json
+import os
+from datetime import datetime
 
 # 현재 날짜 가져오기
 current_date = datetime.now().strftime("%Y-%m-%d")
 folder_path = "starbucks"
 filename = f"{folder_path}/menustarbucks_{current_date}.json"
 
-# 웹드라이브 설치
+# 폴더 생성
+if not os.path.exists(folder_path):
+    os.makedirs(folder_path)
+
+# 웹드라이버 설정
 options = ChromeOptions()
 options.add_argument("--headless")
-browser = webdriver.Chrome(options=options)
-browser.get("https://www.starbucks.co.kr:7643/menu/drink_list.do")
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--disable-gpu")
+service = ChromeService(executable_path=ChromeDriverManager().install())
+browser = webdriver.Chrome(service=service, options=options)
 
-# 페이지가 완전히 로드될 때까지 대기
-WebDriverWait(browser, 10).until(
-    EC.presence_of_element_located((By.CLASS_NAME, "product_espresso"))
-)
+product_cd_list = [
+    "30", "25", "110563", "94", "110582", "126197", "110601", "38", "9200000004119", 
+    "9200000001939", "9200000002095", "9200000004732", "9200000004728", "128692", 
+    "9200000004120", "9200000001941", "9200000004734", "9200000004730", "128695", 
+    "9200000005285", "110569", "9200000005284", "41", "110566", "110572", "46", 
+    "9200000004313", "128192", "9200000005181", "9200000005178", "110612", 
+    "9200000002950", "9200000003505", "9200000003506", "9200000002953", "20", 
+    "110611", "9200000001631", "110614"
+]
 
-# 업데이트된 페이지 소스를 변수에 저장
-html_source_updated = browser.page_source
-soup = BeautifulSoup(html_source_updated, 'html.parser')
+detailed_coffee_data = []
 
-# 데이터 추출
-coffee_data = []
-tracks = soup.select("#container > .content > .product_result_wrap.product_result_wrap01 > div > dl > dd:nth-child(2) > .product_list > dl > dd > .product_espresso > li")
+for product_cd in product_cd_list:
+    detail_url = f"https://www.starbucks.co.kr/menu/drink_view.do?product_cd={product_cd}"
+    browser.get(detail_url)
+    
+    try:
+        WebDriverWait(browser, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "product_view_detail")))
+    except Exception as e:
+        print(f"Failed to load product detail page for product_cd {product_cd}")
+        continue
 
-for track in tracks:
-    title = track.select_one("li > dl > dd").text.strip()    
-    image_url = track.select_one("li > dl > dt > a > img").get('src')
-    coffee_data.append({
+    html_source = browser.page_source
+    soup = BeautifulSoup(html_source, 'html.parser')
+    
+    title_element = soup.select_one(".myAssignZone h4")
+    if title_element:
+        title = title_element.contents[0].strip() if title_element.contents else "No Title"
+        titleE = title_element.select_one("span").text.strip() if title_element.select_one("span") else "No English Title"
+    else:
+        title = "No Title"
+        titleE = "No English Title"
+    
+    image_element = soup.select_one(".product_big_pic img")
+    image_url = image_element['src'] if image_element else "No Image"
+    
+    desction_element = soup.select_one(".myAssignZone p.t1")
+    desction = desction_element.text.strip() if desction_element else "No Description"
+    
+    information = {}
+    for row in soup.select(".product_view_info ul li"):
+        key = row.select_one("dt").text.strip()
+        value = row.select_one("dd").text.strip()
+        information[key] = value
+    
+    detailed_coffee_data.append({
+        "brand": "스타벅스",
         "title": title,
+        "titleE": titleE,
         "imageURL": image_url,
+        "desction": desction,
+        "information": information,
+        "address": detail_url
     })
 
-# 데이터를 JSON 파일로 저장
+# JSON 파일로 저장
 with open(filename, 'w', encoding='utf-8') as f:
-    json.dump(coffee_data, f, ensure_ascii=False, indent=4)
+    json.dump(detailed_coffee_data, f, ensure_ascii=False, indent=4)
 
-# # 브라우저 종료
-# browser.quit()
+# 브라우저 종료
+browser.quit()
+
+print(f"Data successfully saved to {filename}")
