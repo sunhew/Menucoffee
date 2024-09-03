@@ -1,0 +1,22 @@
+[
+    {
+        "brand": "컴포즈커피",
+        "title": "HOT 디카페인 아메리카노",
+        "imageURL": "https://composecoffee.com/files/thumbnails/936/121/384x530.crop.jpg?t=1724228987",
+        "information": {
+            "용량": "159ml (20oz)",
+            "카페인 - 2shot": "12mg/45ml"
+        },
+        "address": "https://composecoffee.com/menu?page=2"
+    },
+    {
+        "brand": "컴포즈커피",
+        "title": "ICE 디카페인 아메리카노",
+        "imageURL": "https://composecoffee.com/files/thumbnails/938/121/384x530.crop.jpg?t=1724229023",
+        "information": {
+            "용량": "159ml (20oz)",
+            "카페인 - 2shot": "12mg/45ml"
+        },
+        "address": "https://composecoffee.com/menu?page=2"
+    }
+]
